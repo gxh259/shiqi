@@ -47,7 +47,7 @@ brew install --cask gxh259/shiqi/shiqi
 
 ```sh
 python3 scripts/build.py --output build
-python3 scripts/package_dmg.py build/诗栖.app build/ShiQi-1.3.1-universal.dmg
+python3 scripts/package_dmg.py build/诗栖.app build/ShiQi-1.3.2-universal.dmg
 ```
 
 构建脚本分别编译 `arm64-apple-macosx13.0` 和 `x86_64-apple-macosx13.0`，通过 `lipo` 合并，最后临时签名并检查双架构。
@@ -88,3 +88,7 @@ arch -x86_64 build/诗栖.app/Contents/MacOS/ShiQi --self-test
 - [Homebrew Cask Cookbook](https://docs.brew.sh/Cask-Cookbook)
 
 原创代码及自制示例素材采用 MIT 许可证。古诗正文为公版作品。
+
+## 全屏休息提醒
+
+提醒到时会在全部已连接显示器铺满当前诗画并显示倒计时，默认休息 5 分钟。可以在「休息提醒与偏好设置 → 休息提醒 → 休息时长」选择 20 秒、1、3、5 或 10 分钟，也可选择「现在休息一下」立即体验。点击「继续搬砖」或按 Esc 可以提前返回；倒计时结束自动退出。返回后重新计算工作间隔，不锁定电脑。休息期间暂停应用内诗画切换和下一次提醒；连接或移除屏幕时更新覆盖范围。此功能为应用内全屏展示，不是系统锁屏。

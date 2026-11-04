@@ -17,4 +17,9 @@ check("拒绝草稿",(try? ReleaseDownload.parse(metadata(["draft":true])))==nil
 check("拒绝预发行包",(try? ReleaseDownload.parse(metadata(["prerelease":true])))==nil)
 let file=FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString);try Data("abc".utf8).write(to:file);defer{try? FileManager.default.removeItem(at:file)}
 check("SHA-256 文件校验",try ReleaseDownload.fileHash(file)=="ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
+let now=Date(timeIntervalSince1970:1000);let rest=RestCountdown(seconds:300,now:now)
+check("五分钟倒计时",rest.remaining(at:now)==300)
+check("倒计时根据截止时间计算",rest.remaining(at:now.addingTimeInterval(73.5))==227)
+check("倒计时到期归零",rest.remaining(at:now.addingTimeInterval(500))==0)
+check("倒计时显示格式",RestCountdown.display(65)=="01:05")
 print(String(data:try! JSONSerialization.data(withJSONObject:["success":true,"checks":checks],options:.prettyPrinted),encoding:.utf8)!)

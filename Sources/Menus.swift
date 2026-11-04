@@ -19,7 +19,7 @@ extension Delegate {
   let color=settingGroup("字体颜色","color",[("米白","#fff8e8"),("纯白","#ffffff"),("墨黑","#182724"),("暖金","#e7c77d"),("浅绿","#c3dcc5")]);color.submenu?.addItem(.separator());let custom=NSMenuItem(title:"自定义颜色…",action:#selector(chooseColor),keyEquivalent:"");custom.target=self;color.submenu?.addItem(custom);options.addItem(color)
   options.addItem(settingGroup("诗词对齐","align",[("左对齐","left"),("居中","center")]))
   options.addItem(settingGroup("自动切换诗画","interval",[("关闭","0"),("每分钟","60"),("每 5 分钟","300"),("每 15 分钟","900"),("每 30 分钟","1800")]))
-  prefs.addItem(display);prefs.addItem(settingGroup("休息提醒","reminder",[("关闭","0"),("每 20 分钟","1200"),("每 30 分钟","1800"),("每小时","3600")]))
+  prefs.addItem(display);let rest=settingGroup("休息提醒","reminder",[("关闭","0"),("每 20 分钟","1200"),("每 30 分钟","1800"),("每小时","3600")]);rest.submenu?.addItem(.separator());rest.submenu?.addItem(settingGroup("休息时长","restDuration",[("20 秒","20"),("1 分钟","60"),("3 分钟","180"),("5 分钟","300"),("10 分钟","600")]));rest.submenu?.addItem(actionItem("现在休息一下","rest"));prefs.addItem(rest)
   prefs.addItem(actionItem("屏幕保护模式","screensaver"));return root
  }
  func populateOperations(_ menu:NSMenu, shell:Bool){
