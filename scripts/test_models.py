@@ -10,3 +10,8 @@ with tempfile.TemporaryDirectory(prefix="shiqi-corpus-tests-") as temp:
  exe=pathlib.Path(temp)/"migration"
  subprocess.run(["swiftc",str(root/"Tests/CorpusMigration.swift"),"-o",str(exe),"-module-cache-path",temp+"/cache"],check=True)
  subprocess.run([str(exe),str(root/"Resources/index.html")],check=True)
+
+with tempfile.TemporaryDirectory(prefix="shiqi-update-runner-tests-") as temp:
+ exe=pathlib.Path(temp)/"runner-tests"
+ subprocess.run(["swiftc",str(root/"Sources/UpdateModels.swift"),str(root/"Sources/UpdateProcessRunner.swift"),str(root/"Tests/UpdateRunnerTests.swift"),"-o",str(exe),"-module-cache-path",temp+"/cache"],check=True)
+ subprocess.run([str(exe)],check=True)

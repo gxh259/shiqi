@@ -11,14 +11,20 @@ extension Delegate {
    config.userContentController.addUserScript(WKUserScript(source:js,injectionTime:.atDocumentStart,forMainFrameOnly:true))
   }catch{NSLog("Failed to load poetry resources: %@",error.localizedDescription)}
  }
- func preservePrivateResources() throws {
-  let fm=FileManager.default;let destination=Self.support.appendingPathComponent("PrivateResources",isDirectory:true)
+ func preservePrivateResources()async throws {
+  let destination=Self.support.appendingPathComponent("PrivateResources",isDirectory:true)
   guard resourceRoot.standardizedFileURL != destination.standardizedFileURL else{return}
   let root=resourceRoot;let library=try Data(contentsOf:root.appendingPathComponent("library.json"));let list=(try JSONSerialization.jsonObject(with:library)) as? [Any] ?? []
   // Public sample resources are replaced by the next public release; user resources persist separately.
   let edition=Bundle.main.object(forInfoDictionaryKey:"ShiQiResourceEdition") as? String;guard edition=="personal" || (edition==nil && list.count>3) else{return}
-  try fm.createDirectory(at:Self.support,withIntermediateDirectories:true);let staged=Self.support.appendingPathComponent(".PrivateResources-"+UUID().uuidString,isDirectory:true);try fm.createDirectory(at:staged,withIntermediateDirectories:true)
-  do {for name in ["library.json","wallpapers.json","Wallpapers"] {try fm.copyItem(at:root.appendingPathComponent(name),to:staged.appendingPathComponent(name))};try fm.moveItem(at:staged,to:destination)}catch{try? fm.removeItem(at:staged);throw error}
+  let support=Self.support
+  try await withCheckedThrowingContinuation{(continuation:CheckedContinuation<Void,Error>) in
+   DispatchQueue.global(qos:.utility).async {
+    let files=FileManager.default;let staged=support.appendingPathComponent(".PrivateResources-"+UUID().uuidString,isDirectory:true)
+    do{try files.createDirectory(at:support,withIntermediateDirectories:true);try files.createDirectory(at:staged,withIntermediateDirectories:true);for name in ["library.json","wallpapers.json","Wallpapers"]{try files.copyItem(at:root.appendingPathComponent(name),to:staged.appendingPathComponent(name))};try files.moveItem(at:staged,to:destination);continuation.resume()}
+    catch{try? files.removeItem(at:staged);continuation.resume(throwing:error)}
+   }
+  }
  }
 }
 extension NSColor {

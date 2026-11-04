@@ -47,7 +47,7 @@ brew install --cask gxh259/shiqi/shiqi
 
 ```sh
 python3 scripts/build.py --output build
-python3 scripts/package_dmg.py build/诗栖.app build/ShiQi-1.4.0-universal.dmg
+python3 scripts/package_dmg.py build/诗栖.app build/ShiQi-1.4.1-universal.dmg
 ```
 
 构建脚本分别编译 `arm64-apple-macosx13.0` 和 `x86_64-apple-macosx13.0`，通过 `lipo` 合并，最后临时签名并检查双架构。
@@ -100,3 +100,5 @@ arch -x86_64 build/诗栖.app/Contents/MacOS/ShiQi --self-test
 「屏幕保护模式」直接覆盖全部显示器显示无边框诗画，不打开主窗口，也不显示休息倒计时；按 Esc 或点击「继续搬砖」退出。休息提醒仍使用全屏倒计时。
 
 菜单中的字号、颜色、对齐、诗画切换等直接生效。搜索、收藏、历史、赏析、自定义诗词及精选配图使用菜单栏下方的轻量面板，关闭即收起，不唤起完整软件窗口。导出、视频选择使用独立系统对话框；显示器在菜单中直接选择。「显示诗栖」打开快捷控制面板。
+
+1.4.1 同时修复旧更新流程在主线程复制文件造成的界面卡顿：安装复制在后台进程执行，可取消并有 90 秒超时，个人素材保存在后台复制；原应用在校验完成前不替换。
