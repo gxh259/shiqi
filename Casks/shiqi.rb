@@ -8,6 +8,6 @@ cask "shiqi" do
   desc "Offline poetry and landscape desktop wallpaper"
   homepage "https://github.com/gxh259/shiqi"
 
-  depends_on macos: ">= :ventura"
+  depends_on macos: :ventura
   app "诗栖.app"
 end
