@@ -25,6 +25,16 @@ brew install --cask gxh259/shiqi/shiqi
 
 定时切换随应用运行而执行。退出后桌面展示移除并露出原有系统壁纸；如需退出后保留诗画，请使用「设置壁纸到当前桌面」。屏保为应用内展示，不是系统 `.saver` 插件。长篇诗词导出超出画布时会标注省略。
 
+## 菜单与更新
+
+「搜索」下面是「其他功能」：收藏当前壁纸、收藏当前诗歌、收藏列表、历史记录、复制、截屏导出、保存壁纸、分享、动态壁纸、停止动态壁纸；最底部是「版本更新」。
+
+「休息提醒与偏好设置」包含登录启动、调整诗歌显示、休息提醒、屏幕保护模式。「调整诗歌显示」包含字号、文字阴影浓度、字体颜色（预设及自定义）、诗词对齐、自动切换诗画。
+
+点击「版本更新」会读取固定仓库的 GitHub 最新正式 Release。只有新版本号高于本机版本时才自动下载并安装，完成后重启；下载时可关闭进度窗口取消。下载来源限制为 GitHub，校验 Release 资产 SHA-256、应用标识、版本和签名结构；不降级、不自动清除 quarantine。目录不可写时打开已校验的 DMG，交由用户拖拽完成安装。当前仍为 ad-hoc 签名，校验不等同于 Apple 开发者身份认证。
+
+个人素材在更新前保存到 `~/Library/Application Support/ShiQi/PrivateResources`，新版本继续加载该目录，避免被公开示例资源覆盖。设置和自定义诗词另存本机设置。成功安装后旧应用以隐藏的 `.ShiQi-backup-*.app` 保留在原目录，可用于手动恢复。重启失败时尝试回滚原应用；实际登录、多屏等系统特性仍需对应环境验收。
+
 ## 素材范围
 
 公开发行版包含 3 首公版古诗及 3 张由本仓库程序生成的示例壁纸，不包含现代书籍赏析、第三方壁纸、用户收藏或本机个人文件。自定义诗词与设置仅保存在本机。
@@ -37,7 +47,7 @@ brew install --cask gxh259/shiqi/shiqi
 
 ```sh
 python3 scripts/build.py --output build
-python3 scripts/package_dmg.py build/诗栖.app build/ShiQi-1.2.0-universal.dmg
+python3 scripts/package_dmg.py build/诗栖.app build/ShiQi-1.3.0-universal.dmg
 ```
 
 构建脚本分别编译 `arm64-apple-macosx13.0` 和 `x86_64-apple-macosx13.0`，通过 `lipo` 合并，最后临时签名并检查双架构。
@@ -59,6 +69,8 @@ swiftc scripts/wallpaper.swift -o /tmp/shiqi-wallpaper
 ```
 
 ## 验证
+
+版本比较、来源限制与校验测试：`python3 scripts/test_models.py`。
 
 ```sh
 lipo -archs build/诗栖.app/Contents/MacOS/ShiQi
