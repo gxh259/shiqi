@@ -28,13 +28,13 @@ extension Delegate {
   let other=NSMenuItem(title:"其他功能",action:nil,keyEquivalent:"");let items=NSMenu();other.submenu=items
   for (t,c,k) in [("收藏当前壁纸","favoriteWall",""),("收藏当前诗歌","favorite","d"),("收藏列表","collection",""),("历史记录","history",""),("复制诗歌文本","copy","c"),("下载诗画截屏","export","s"),("仅保存壁纸","image",""),("分享诗配图","share",""),("动态壁纸","video",""),("停止动态壁纸","stopVideo","")] {if c=="copy"{items.addItem(.separator())};items.addItem(actionItem(t,c,k))}
   items.addItem(.separator());items.addItem(actionItem("版本更新…","update"));menu.addItem(other)
-  menu.addItem(makePreferences());menu.addItem(actionItem("选择显示器","screens"))
+  menu.addItem(makePreferences());menu.addItem(screensMenu())
   if shell {menu.addItem(.separator());menu.addItem(withTitle:"退出诗栖",action:#selector(NSApplication.terminate(_:)),keyEquivalent:"q")}
  }
  func configureMenus(menu:NSMenu){let root=NSMenuItem(title:"操作",action:nil,keyEquivalent:"");let ops=NSMenu();populateOperations(ops,shell:false);root.submenu=ops;menu.addItem(root);let statusMenu=NSMenu();populateOperations(statusMenu,shell:true);status.menu=statusMenu;syncMenuChecks()}
  @objc func changeSetting(_ item:NSMenuItem){guard let data=item.representedObject as? [String:String],let key=data["key"],let value=data["value"] else{return};applySetting(key,value)}
- func applySetting(_ key:String,_ value:String){let args=String(data:try! JSONSerialization.data(withJSONObject:[key,value]),encoding:.utf8)!;web.evaluateJavaScript("applySetting(...\(args))",completionHandler:nil)}
- @objc func chooseColor(){let picker=NSColorPanel.shared;picker.setTarget(self);picker.setAction(#selector(colorChanged(_:)));picker.isContinuous=true;picker.showsAlpha=false;picker.color=desktopColor;picker.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)}
+ func applySetting(_ key:String,_ value:String){let args=String(data:try! JSONSerialization.data(withJSONObject:[key,value]),encoding:.utf8)!;runWeb("applySetting(...\(args))")}
+ @objc func chooseColor(){restOverlay.finish();let picker=NSColorPanel.shared;picker.setTarget(self);picker.setAction(#selector(colorChanged(_:)));picker.isContinuous=true;picker.showsAlpha=false;picker.color=desktopColor;picker.makeKeyAndOrderFront(nil);NSApp.activate(ignoringOtherApps:true)}
  @objc func colorChanged(_ panel:NSColorPanel){guard let c=panel.color.usingColorSpace(.sRGB) else{return};applySetting("color",String(format:"#%02x%02x%02x",Int(c.redComponent*255),Int(c.greenComponent*255),Int(c.blueComponent*255)))}
  func syncMenuChecks(){
   let dict=(UserDefaults.standard.string(forKey:"savedState").flatMap{$0.data(using:.utf8)}).flatMap{try? JSONSerialization.jsonObject(with:$0)} as? [String:Any] ?? [:]
