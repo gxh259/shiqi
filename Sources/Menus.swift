@@ -2,6 +2,7 @@ import Cocoa
 import ServiceManagement
 
 extension Delegate {
+ var quitMenuTitle:String {let version=Bundle.main.object(forInfoDictionaryKey:"CFBundleShortVersionString") as? String ?? "未知版本";return "退出诗栖 · v\(version)"}
  func actionItem(_ title:String,_ command:String,_ key:String="") -> NSMenuItem {
   let item=NSMenuItem(title:title,action:#selector(menuAction(_:)),keyEquivalent:key);item.target=self;item.representedObject=command
   if ["pair","wall","poem"].contains(command){item.keyEquivalentModifierMask=[]};return item
@@ -30,7 +31,7 @@ extension Delegate {
   for (t,c,k) in [("收藏当前壁纸","favoriteWall",""),("收藏当前诗歌","favorite","d"),("收藏列表","collection",""),("历史记录","history",""),("复制诗歌文本","copy","c"),("下载诗画截屏","export","s"),("仅保存壁纸","image",""),("分享诗配图","share",""),("动态壁纸","video",""),("停止动态壁纸","stopVideo","")] {if c=="copy"{items.addItem(.separator())};items.addItem(actionItem(t,c,k))}
   items.addItem(.separator());items.addItem(actionItem("版本更新…","update"));menu.addItem(other)
   menu.addItem(makePreferences());menu.addItem(screensMenu())
-  if shell {menu.addItem(.separator());menu.addItem(withTitle:"退出诗栖",action:#selector(NSApplication.terminate(_:)),keyEquivalent:"q")}
+  if shell {menu.addItem(.separator());menu.addItem(withTitle:quitMenuTitle,action:#selector(NSApplication.terminate(_:)),keyEquivalent:"q")}
  }
  func configureMenus(menu:NSMenu){let root=NSMenuItem(title:"操作",action:nil,keyEquivalent:"");let ops=NSMenu();populateOperations(ops,shell:false);root.submenu=ops;menu.addItem(root);let statusMenu=NSMenu();populateOperations(statusMenu,shell:true);status.menu=statusMenu;syncMenuChecks()}
  @objc func changeSetting(_ item:NSMenuItem){guard let data=item.representedObject as? [String:String],let key=data["key"],let value=data["value"] else{return};applySetting(key,value)}

@@ -11,7 +11,7 @@ if a.resources:
    if (res/name).exists():shutil.rmtree(res/name)
    shutil.copytree(src,res/name,copy_function=shutil.copy)
   else:shutil.copy(src,res/name)
-info=plistlib.loads((root/'Info.plist').read_bytes());info.update(CFBundleVersion='10',CFBundleShortVersionString='1.5.0',LSArchitecturePriority=['arm64','x86_64'],ShiQiResourceEdition='personal' if a.resources else 'public');(app/'Contents/Info.plist').write_bytes(plistlib.dumps(info))
+info=plistlib.loads((root/'Info.plist').read_bytes());info.update(CFBundleVersion='11',CFBundleShortVersionString='1.5.1',LSArchitecturePriority=['arm64','x86_64'],ShiQiResourceEdition='personal' if a.resources else 'public');(app/'Contents/Info.plist').write_bytes(plistlib.dumps(info))
 with tempfile.TemporaryDirectory(prefix='shiqi-build-') as temp:
  bins=[];helpers=[]
  for arch in ['arm64','x86_64']:

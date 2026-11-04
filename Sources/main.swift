@@ -13,7 +13,7 @@ class Delegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavig
  var videoWindows:[NSWindow]=[];var players:[AVPlayer]=[];var loopObservers:[NSObjectProtocol]=[];var screenIndex=UserDefaults.standard.integer(forKey:"screenIndex");var keyMonitor:Any?
  var window: NSWindow!; var web: WKWebView!; var status: NSStatusItem!
  func applicationDidFinishLaunching(_ notification: Notification) {
-  let menu=NSMenu(); let item=NSMenuItem();menu.addItem(item);let sub=NSMenu();sub.addItem(withTitle:"关于诗栖",action:#selector(about),keyEquivalent:"");sub.addItem(withTitle:"显示诗栖",action:#selector(show),keyEquivalent:"0");sub.addItem(.separator());sub.addItem(withTitle:"退出诗栖",action:#selector(NSApplication.terminate(_:)),keyEquivalent:"q");item.submenu=sub;NSApp.mainMenu=menu
+  let menu=NSMenu(); let item=NSMenuItem();menu.addItem(item);let sub=NSMenu();sub.addItem(withTitle:"关于诗栖",action:#selector(about),keyEquivalent:"");sub.addItem(withTitle:"显示诗栖",action:#selector(show),keyEquivalent:"0");sub.addItem(.separator());sub.addItem(withTitle:quitMenuTitle,action:#selector(NSApplication.terminate(_:)),keyEquivalent:"q");item.submenu=sub;NSApp.mainMenu=menu
   status=NSStatusBar.system.statusItem(withLength:22);status.button?.image=NSImage(contentsOf:Bundle.main.resourceURL!.appendingPathComponent("MenuIcon.png"));status.button?.image?.isTemplate=true;status.button?.image?.size=NSSize(width:16,height:16);status.button?.imagePosition = .imageOnly;status.button?.imageScaling = .scaleProportionallyDown;status.button?.title="";status.button?.toolTip="诗栖 · 桌面诗画";status.menu=sub.copy() as? NSMenu
   let config=WKWebViewConfiguration();config.userContentController.add(self,name:"native")
   configureWebData(config)
