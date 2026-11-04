@@ -1,0 +1,6 @@
+build/
+private-resources/
+*.dmg
+*.dmg.sha256
+.DS_Store
+__pycache__/
