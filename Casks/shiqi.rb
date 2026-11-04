@@ -1,6 +1,6 @@
 cask "shiqi" do
-  version "1.4.1"
-  sha256 "27ce5680fa276511a3a0ad9b00b2a049ec05f2dced42da51596b1c3a76bc3ca1"
+  version "1.5.0"
+  sha256 "3d01fd3037f0f645913ae4255bc2a896a77e437f25331c496cad1357e90cfa11"
 
   url "https://github.com/gxh259/shiqi/releases/download/v#{version}/ShiQi-#{version}-universal.dmg"
   name "诗栖"
