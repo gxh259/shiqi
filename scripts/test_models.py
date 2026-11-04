@@ -20,3 +20,11 @@ with tempfile.TemporaryDirectory(prefix="shiqi-placement-tests-") as temp:
  exe=pathlib.Path(temp)/"placement-tests"
  subprocess.run(["swiftc",str(root/"Sources/PoemPlacement.swift"),str(root/"Tests/PoemPlacementTests.swift"),"-o",str(exe),"-module-cache-path",temp+"/cache","-framework","Cocoa"],check=True)
  subprocess.run([str(exe)],check=True)
+
+with tempfile.TemporaryDirectory(prefix="shiqi-typography-tests-") as temp:
+ exe=pathlib.Path(temp)/"typography-tests"
+ color=pathlib.Path(temp)/"Color.swift"
+ source=(root/"Sources/Resources.swift").read_text()
+ color.write_text("import Cocoa\n"+source[source.index("extension NSColor {"):])
+ subprocess.run(["swiftc",str(root/"Sources/PoetryStyle.swift"),str(root/"Sources/PoemPlacement.swift"),str(color),str(root/"Tests/TypographyTests.swift"),"-o",str(exe),"-module-cache-path",temp+"/cache","-framework","Cocoa","-framework","CoreText"],check=True)
+ subprocess.run([str(exe)],check=True)
