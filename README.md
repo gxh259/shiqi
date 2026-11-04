@@ -37,7 +37,7 @@ brew install --cask gxh259/shiqi/shiqi
 
 ## 素材范围
 
-公开发行版包含 3 首公版古诗及 3 张由本仓库程序生成的示例壁纸，不包含现代书籍赏析、第三方壁纸、用户收藏或本机个人文件。自定义诗词与设置仅保存在本机。
+公开发行版内置全部 3,045 篇古诗词正文及 3 张由本仓库程序生成的示例壁纸，不包含现代书籍赏析、第三方壁纸、用户收藏或本机个人文件。自定义诗词与设置仅保存在本机。
 
 构建时可接入自己的资源目录。不要把无公开分发授权的素材提交到仓库或 Release。
 
@@ -47,7 +47,7 @@ brew install --cask gxh259/shiqi/shiqi
 
 ```sh
 python3 scripts/build.py --output build
-python3 scripts/package_dmg.py build/诗栖.app build/ShiQi-1.3.0-universal.dmg
+python3 scripts/package_dmg.py build/诗栖.app build/ShiQi-1.3.1-universal.dmg
 ```
 
 构建脚本分别编译 `arm64-apple-macosx13.0` 和 `x86_64-apple-macosx13.0`，通过 `lipo` 合并，最后临时签名并检查双架构。

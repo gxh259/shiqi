@@ -7,7 +7,7 @@ extension Delegate {
   if isValidationRun{config.websiteDataStore = .nonPersistent()}
   do{let library=try Data(contentsOf:resourceRoot.appendingPathComponent("library.json"));let walls=try Data(contentsOf:resourceRoot.appendingPathComponent("wallpapers.json"));let poems=try JSONSerialization.jsonObject(with:library);let names=try JSONSerialization.jsonObject(with:walls);guard let list=poems as? [[String:Any]],!list.isEmpty,let images=names as? [String],!images.isEmpty else {return}
    let saved=String(data:try JSONSerialization.data(withJSONObject:[isValidationRun ? "{}" : (UserDefaults.standard.string(forKey:"savedState") ?? "{}")]),encoding:.utf8)!
-   let js="const LIBRARY=\(String(data:library,encoding:.utf8)!);const WALLPAPERS=\(String(data:walls,encoding:.utf8)!);window.SHIQI_STATE=\(saved)[0];"
+   let js="const LIBRARY=\(String(data:library,encoding:.utf8)!);const WALLPAPERS=\(String(data:walls,encoding:.utf8)!);window.SHIQI_STATE=\(saved)[0];window.SHIQI_PUBLIC_CORPUS=\(resourceRoot.standardizedFileURL == Bundle.main.resourceURL!.standardizedFileURL && Bundle.main.object(forInfoDictionaryKey:"ShiQiResourceEdition") as? String == "public" && list.count>3 ? "true":"false");"
    config.userContentController.addUserScript(WKUserScript(source:js,injectionTime:.atDocumentStart,forMainFrameOnly:true))
   }catch{NSLog("Failed to load poetry resources: %@",error.localizedDescription)}
  }
