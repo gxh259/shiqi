@@ -15,10 +15,10 @@ if(type==='more'){el.innerHTML='<div id="actions" class="grid"></div>';for(let [
 if(!dialog.open)dialog.showModal();if(type==='search')$('query').focus()}
 function list(items){let r=$('result');r.innerHTML='';if(!items.length){r.innerHTML='<p class="hint">这里还没有内容。试试收藏一首诗，或换个关键词。</p>';return}for(let p of items){let row=document.createElement('div');row.className='row';row.innerHTML=`<div class="info">${esc(p.title)}<small>${esc(p.author)} · ${esc(p.category)}<br>${esc(p.body.slice(0,38))}</small></div><button>阅读</button>`;row.querySelector('button').onclick=()=>{state.p=p.id;render();dialog.close()};r.append(row)}}
 let thumbnailObserver;function wallGrid(ids){thumbnailObserver?.disconnect();thumbnailObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.isIntersecting){let tile=entry.target;native('thumbnail',{name:tile.dataset.name,index:tile.dataset.index});thumbnailObserver.unobserve(tile)}}},{root:$('result'),rootMargin:'150px'});let r=$('result');r.innerHTML='<div class="grid" id="tiles"></div>';if(!ids.length)r.innerHTML='<p class="hint">尚未收藏壁纸。</p>';for(let i of ids){let t=document.createElement('div');t.className='tile';t.id='wall-tile-'+i;t.dataset.name=WALLPAPERS[i];t.dataset.index=String(i);t.innerHTML='<button>使用此图</button>';t.onclick=()=>{state.w=i;render();dialog.close()};$('tiles').append(t);thumbnailObserver.observe(t)}}
-function restStarted(){resting=true;clearInterval(timer);clearTimeout(reminder)}
+function restStarted(){resting=true}
 function restFinished(){resting=false;timers()}
 function requestRest(){if(resting)return;restStarted();native('rest')}
-function timers(){clearInterval(timer);clearTimeout(reminder);if(resting)return;if(state.interval)timer=setInterval(()=>change('pair'),state.interval*1000);if(state.reminder)reminder=setTimeout(requestRest,state.reminder*1000)}
+function timers(){/* Background deadlines are managed by the native macOS scheduler. */}
 async function compose(action,onlyImage=false){await imageReady;native('compose',{target:action})}
 function setThumbnail(index,data){let tile=$('wall-tile-'+index);if(tile)tile.style.backgroundImage=`url("${data}")`}
 const positionOptions=[['top-left','左上'],['top-center','顶部居中'],['top-right','右上'],['middle-left','左侧居中'],['middle-center','屏幕中央'],['middle-right','右侧居中'],['bottom-left','左下'],['bottom-center','底部居中'],['bottom-right','右下']];

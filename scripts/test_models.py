@@ -28,3 +28,8 @@ with tempfile.TemporaryDirectory(prefix="shiqi-typography-tests-") as temp:
  color.write_text("import Cocoa\n"+source[source.index("extension NSColor {"):])
  subprocess.run(["swiftc",str(root/"Sources/PoetryStyle.swift"),str(root/"Sources/PoemPlacement.swift"),str(color),str(root/"Tests/TypographyTests.swift"),"-o",str(exe),"-module-cache-path",temp+"/cache","-framework","Cocoa","-framework","CoreText"],check=True)
  subprocess.run([str(exe)],check=True)
+
+with tempfile.TemporaryDirectory(prefix="shiqi-schedule-tests-") as temp:
+ exe=pathlib.Path(temp)/"schedule-tests"
+ subprocess.run(["swiftc",str(root/"Sources/WallpaperSchedule.swift"),str(root/"Tests/WallpaperScheduleTests.swift"),"-o",str(exe),"-module-cache-path",temp+"/cache"],check=True)
+ subprocess.run([str(exe)],check=True)

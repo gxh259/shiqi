@@ -5,9 +5,10 @@ import UniformTypeIdentifiers
 import ServiceManagement
 class Delegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavigationDelegate {
  var inlinePopover=NSPopover();var feedbackPopover:NSPopover?;var webReady=false;var pendingWeb:[String]=[];var pendingPanel:String?
- var restDuration=300;lazy var restOverlay=RestOverlayController(onFinish:{[weak self] in self?.runWeb("restFinished()")})
+ lazy var nativeSchedule=NativeSchedule(onPair:{[weak self] in self?.runWeb("change('pair')")},onRest:{[weak self] in self?.perform("rest")})
+ var restDuration=300;lazy var restOverlay=RestOverlayController(onFinish:{[weak self] in self?.nativeSchedule.resume();self?.runWeb("restFinished()")})
  lazy var updater=UpdateController(owner:self);var desktopColor=NSColor.poetryHex("#fff8e8")!;var videoTexts:[CALayer]=[];var poetryStyle=PoetryStyle();var colorSettingKey="color";var poemTitle="";var poemAuthor="";var poemBody="";var poemCategory=""
- var isValidationRun:Bool {testing || CommandLine.arguments.contains("--update-test") || CommandLine.arguments.contains("--menu-test") || CommandLine.arguments.contains("--rest-test") || CommandLine.arguments.contains("--interaction-test")}
+ var isValidationRun:Bool {testing || CommandLine.arguments.contains("--schedule-test") || CommandLine.arguments.contains("--update-test") || CommandLine.arguments.contains("--menu-test") || CommandLine.arguments.contains("--rest-test") || CommandLine.arguments.contains("--interaction-test")}
  var desktopPosition="middle-right";var desktopFont:CGFloat=26;var desktopAlign="left";var desktopShadow:Float=0.85;var desktopWindow:NSWindow?;var lastImage:NSImage?;var desktopEnabled=true;var loginMenu:NSMenuItem!
  var poemText="";var sharingPicker:NSSharingServicePicker?;let testing=CommandLine.arguments.contains("--self-test")
  var videoWindows:[NSWindow]=[];var players:[AVPlayer]=[];var loopObservers:[NSObjectProtocol]=[];var screenIndex=UserDefaults.standard.integer(forKey:"screenIndex");var keyMonitor:Any?
@@ -27,6 +28,7 @@ class Delegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavig
  }
  func webView(_ webView:WKWebView,didFinish navigation:WKNavigation!){
  webReady=true;for script in pendingWeb{runWeb(script)};pendingWeb=[];if let panel=pendingPanel{pendingPanel=nil;showInlinePanel(panel)}
+ if CommandLine.arguments.contains("--schedule-test"){runScheduleTests();return}
  if CommandLine.arguments.contains("--interaction-test"){runInteractionTests();return}
  if CommandLine.arguments.contains("--rest-test"){runRestSelfTest();return}
  if testing {web.evaluateJavaScript("""
@@ -50,8 +52,8 @@ class Delegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavig
  func perform(_ cmd:String){
  if cmd=="desktop" {desktopEnabled=true;updateDesktop();videoWindows.forEach{$0.orderFrontRegardless()};window.orderOut(nil)}
  if cmd=="hideDesktop" {desktopEnabled=false;desktopWindow?.orderOut(nil);videoWindows.forEach{$0.orderOut(nil)}}
- if cmd=="screensaver" {closeInlinePanel();window.orderOut(nil);runWeb("restStarted()");restOverlay.startScreensaver(image:lastImage,poem:poemText)}
- if cmd=="rest" {closeInlinePanel();window.orderOut(nil);runWeb("restStarted()");restOverlay.start(seconds:restDuration,image:lastImage,poem:poemText)}
+ if cmd=="screensaver" {nativeSchedule.pause();closeInlinePanel();window.orderOut(nil);runWeb("restStarted()");restOverlay.startScreensaver(image:lastImage,poem:poemText)}
+ if cmd=="rest" {nativeSchedule.pause();closeInlinePanel();window.orderOut(nil);runWeb("restStarted()");restOverlay.start(seconds:restDuration,image:lastImage,poem:poemText)}
  if cmd=="screens" {closeInlinePanel();let menu=screensMenu().submenu!;menu.popUp(positioning:nil,at:NSEvent.mouseLocation,in:nil)}
  if cmd=="stopVideo" {for p in players{p.pause()};for w in videoWindows{w.orderOut(nil)};for o in loopObservers{NotificationCenter.default.removeObserver(o)};videoWindows=[];players=[];loopObservers=[];videoTexts=[];reply("动态壁纸已停止")}
  if cmd=="video" {restOverlay.finish();closeInlinePanel();let panel=NSOpenPanel();panel.allowedContentTypes=[.movie];panel.canChooseDirectories=false;NSApp.activate(ignoringOtherApps:true);panel.begin{r in guard r == .OK, let url=panel.url else{return};self.perform("stopVideo");self.desktopEnabled=true;self.updateDesktop();let screens=NSScreen.screens;guard !screens.isEmpty else{return};let screen=screens[min(self.screenIndex,screens.count-1)];let w=NSWindow(contentRect:screen.frame,styleMask:.borderless,backing:.buffered,defer:false);w.isReleasedWhenClosed=false;w.level=NSWindow.Level(rawValue:Int(CGWindowLevelForKey(.desktopWindow))+2);w.collectionBehavior=[.canJoinAllSpaces,.stationary,.ignoresCycle];w.ignoresMouseEvents=true;let view=NSView(frame:NSRect(origin:.zero,size:screen.frame.size));view.wantsLayer=true;let player=AVPlayer(url:url);player.isMuted=true;let layer=AVPlayerLayer(player:player);layer.frame=view.bounds;layer.videoGravity = .resizeAspectFill;view.layer=layer;let text=self.poetryLayer(size:view.bounds.size,scale:screen.backingScaleFactor);layer.addSublayer(text);self.videoTexts.append(text);w.contentView=view;let o=NotificationCenter.default.addObserver(forName:.AVPlayerItemDidPlayToEndTime,object:player.currentItem,queue:.main){_ in player.seek(to:.zero);player.play()};self.loopObservers.append(o);self.players.append(player);self.videoWindows.append(w);w.orderFrontRegardless();player.play();self.reply("动态壁纸已开始，可在菜单中停止")}}
@@ -68,7 +70,7 @@ class Delegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavig
   if action=="compose"{guard let target=d["target"],["export","share","wallpaper"].contains(target),let data=composedPoetry() else{reply("诗画生成失败，请等待壁纸加载完成后重试");return};action=target;d["data"]="data:image/png;base64,"+data.base64EncodedString()}
   if action=="dismissPanel"{closeInlinePanel();return}
   if action=="feedback",let message=d["text"]{showFeedback(message);return}
-  if action=="syncSettings",let raw=d["json"],let data=raw.data(using:.utf8),(try? JSONSerialization.jsonObject(with:data)) is [String:Any] {if !isValidationRun{UserDefaults.standard.set(raw,forKey:"savedState")};syncMenuChecks();return}
+  if action=="syncSettings",let raw=d["json"],let data=raw.data(using:.utf8),let settings=(try? JSONSerialization.jsonObject(with:data)) as? [String:Any] {if !isValidationRun{UserDefaults.standard.set(raw,forKey:"savedState");nativeSchedule.configure(interval:(settings["interval"] as? NSNumber)?.doubleValue ?? 0,reminder:(settings["reminder"] as? NSNumber)?.doubleValue ?? 0)};syncMenuChecks();return}
   if action=="thumbnail",let name=d["name"],name==URL(fileURLWithPath:name).lastPathComponent,let index=d["index"],let number=Int(index),number>=0,let image=NSImage(contentsOf:resourceRoot.appendingPathComponent("Wallpapers").appendingPathComponent(name)){let small=NSImage(size:NSSize(width:240,height:150));small.lockFocus();image.draw(in:NSRect(x:0,y:0,width:240,height:150));small.unlockFocus();if let tiff=small.tiffRepresentation,let rep=NSBitmapImageRep(data:tiff),let data=rep.representation(using:.jpeg,properties:[.compressionFactor:0.65]){let js="setThumbnail(\(number),'data:image/jpeg;base64,\(data.base64EncodedString())')";web.evaluateJavaScript(js,completionHandler:nil)};return}
   if action=="chooseColor"{chooseColor();return}
   if action=="login"{toggleLogin();return}
