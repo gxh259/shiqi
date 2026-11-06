@@ -33,3 +33,8 @@ with tempfile.TemporaryDirectory(prefix="shiqi-schedule-tests-") as temp:
  exe=pathlib.Path(temp)/"schedule-tests"
  subprocess.run(["swiftc",str(root/"Sources/WallpaperSchedule.swift"),str(root/"Tests/WallpaperScheduleTests.swift"),"-o",str(exe),"-module-cache-path",temp+"/cache"],check=True)
  subprocess.run([str(exe)],check=True)
+
+with tempfile.TemporaryDirectory(prefix="shiqi-session-tests-") as temp:
+ exe=pathlib.Path(temp)/"session-tests"
+ subprocess.run(["swiftc",str(root/"Sources/WallpaperSchedule.swift"),str(root/"Sources/NativeSchedule.swift"),str(root/"Sources/SessionActivity.swift"),str(root/"Tests/SessionActivityTests.swift"),"-o",str(exe),"-module-cache-path",temp+"/cache","-framework","Cocoa"],check=True)
+ subprocess.run([str(exe)],check=True)

@@ -55,5 +55,6 @@ final class RestOverlayController:NSObject {
   if present{NSApp.activate(ignoringOtherApps:true);windows.first?.makeKeyAndOrderFront(nil)}
  }
  func tick(now:Date=Date()){guard let countdown=countdown else{return};let remaining=countdown.remaining(at:now);countdownLabels.forEach{$0.stringValue=RestCountdown.display(remaining)};if remaining==0{finish()}}
+ func dismissForLock(){previousApp=nil;finish()}
  @objc func finish(){guard isActive else{return};timer?.invalidate();timer=nil;countdown=nil;mode=nil;if let keyMonitor=keyMonitor{NSEvent.removeMonitor(keyMonitor);self.keyMonitor=nil};windows.forEach{$0.orderOut(nil);$0.close()};windows=[];countdownLabels=[];image=nil;onFinish();if let app=previousApp,app.processIdentifier != ProcessInfo.processInfo.processIdentifier{app.activate(options:[])};previousApp=nil}
 }

@@ -10,6 +10,9 @@ import Foundation
   m.configure(interval:60,reminder:1200,now:start.addingTimeInterval(1801));assert(m.next==nil)
   m.resume(now:start.addingTimeInterval(1980));assert(m.pairDue==start.addingTimeInterval(2040));assert(m.restDue==start.addingTimeInterval(3180))
   m.configure(interval:0,reminder:0,now:start);assert(m.next==nil)
+  m.configure(interval:300,reminder:1200,now:start);let pair=m.pairDue;m.suppressRest(true,now:start.addingTimeInterval(1199));assert(m.pairDue==pair && m.restDue==nil)
+  m.configure(interval:300,reminder:1800,now:start.addingTimeInterval(4000));assert(m.restDue==nil)
+  m.suppressRest(false,now:start.addingTimeInterval(5000));assert(m.restDue==start.addingTimeInterval(6800));let due=m.restDue;m.suppressRest(false,now:start.addingTimeInterval(5001));assert(m.restDue==due)
   print("Native schedule: five-minute deadline, settings saves, repeat, wake catch-up, rest priority, pause/resume and disable passed")
  }
 }

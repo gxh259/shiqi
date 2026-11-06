@@ -5,15 +5,18 @@ import UniformTypeIdentifiers
 import ServiceManagement
 class Delegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavigationDelegate {
  var inlinePopover=NSPopover();var feedbackPopover:NSPopover?;var webReady=false;var pendingWeb:[String]=[];var pendingPanel:String?
+ lazy var sessionActivity=SessionActivityMonitor{[weak self] blocked in self?.sessionAvailabilityChanged(blocked)}
  lazy var nativeSchedule=NativeSchedule(onPair:{[weak self] in self?.runWeb("change('pair')")},onRest:{[weak self] in self?.perform("rest")})
  var restDuration=300;lazy var restOverlay=RestOverlayController(onFinish:{[weak self] in self?.nativeSchedule.resume();self?.runWeb("restFinished()")})
  lazy var updater=UpdateController(owner:self);var desktopColor=NSColor.poetryHex("#fff8e8")!;var videoTexts:[CALayer]=[];var poetryStyle=PoetryStyle();var colorSettingKey="color";var poemTitle="";var poemAuthor="";var poemBody="";var poemCategory=""
- var isValidationRun:Bool {testing || CommandLine.arguments.contains("--schedule-test") || CommandLine.arguments.contains("--update-test") || CommandLine.arguments.contains("--menu-test") || CommandLine.arguments.contains("--rest-test") || CommandLine.arguments.contains("--interaction-test")}
+ var isValidationRun:Bool {testing || CommandLine.arguments.contains("--lock-test") || CommandLine.arguments.contains("--schedule-test") || CommandLine.arguments.contains("--update-test") || CommandLine.arguments.contains("--menu-test") || CommandLine.arguments.contains("--rest-test") || CommandLine.arguments.contains("--interaction-test")}
  var desktopPosition="middle-right";var desktopFont:CGFloat=26;var desktopAlign="left";var desktopShadow:Float=0.85;var desktopWindow:NSWindow?;var lastImage:NSImage?;var desktopEnabled=true;var loginMenu:NSMenuItem!
  var poemText="";var sharingPicker:NSSharingServicePicker?;let testing=CommandLine.arguments.contains("--self-test")
  var videoWindows:[NSWindow]=[];var players:[AVPlayer]=[];var loopObservers:[NSObjectProtocol]=[];var screenIndex=UserDefaults.standard.integer(forKey:"screenIndex");var keyMonitor:Any?
  var window: NSWindow!; var web: WKWebView!; var status: NSStatusItem!
+ func sessionAvailabilityChanged(_ blocked:Bool){nativeSchedule.suppressRest(blocked);if blocked && restOverlay.mode == .rest{restOverlay.dismissForLock()}}
  func applicationDidFinishLaunching(_ notification: Notification) {
+  nativeSchedule.restAllowed={[weak self] in self?.sessionActivity.isAvailable == true};sessionAvailabilityChanged(!sessionActivity.isAvailable)
   let menu=NSMenu(); let item=NSMenuItem();menu.addItem(item);let sub=NSMenu();sub.addItem(withTitle:"关于诗栖",action:#selector(about),keyEquivalent:"");sub.addItem(withTitle:"显示诗栖",action:#selector(show),keyEquivalent:"0");sub.addItem(.separator());sub.addItem(withTitle:quitMenuTitle,action:#selector(NSApplication.terminate(_:)),keyEquivalent:"q");item.submenu=sub;NSApp.mainMenu=menu
   status=NSStatusBar.system.statusItem(withLength:22);status.button?.image=NSImage(contentsOf:Bundle.main.resourceURL!.appendingPathComponent("MenuIcon.png"));status.button?.image?.isTemplate=true;status.button?.image?.size=NSSize(width:16,height:16);status.button?.imagePosition = .imageOnly;status.button?.imageScaling = .scaleProportionallyDown;status.button?.title="";status.button?.toolTip="诗栖 · 桌面诗画";status.menu=sub.copy() as? NSMenu
   let config=WKWebViewConfiguration();config.userContentController.add(self,name:"native")
@@ -28,6 +31,7 @@ class Delegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavig
  }
  func webView(_ webView:WKWebView,didFinish navigation:WKNavigation!){
  webReady=true;for script in pendingWeb{runWeb(script)};pendingWeb=[];if let panel=pendingPanel{pendingPanel=nil;showInlinePanel(panel)}
+ if CommandLine.arguments.contains("--lock-test"){runLockTests();return}
  if CommandLine.arguments.contains("--schedule-test"){runScheduleTests();return}
  if CommandLine.arguments.contains("--interaction-test"){runInteractionTests();return}
  if CommandLine.arguments.contains("--rest-test"){runRestSelfTest();return}
@@ -53,7 +57,7 @@ class Delegate: NSObject, NSApplicationDelegate, WKScriptMessageHandler, WKNavig
  if cmd=="desktop" {desktopEnabled=true;updateDesktop();videoWindows.forEach{$0.orderFrontRegardless()};window.orderOut(nil)}
  if cmd=="hideDesktop" {desktopEnabled=false;desktopWindow?.orderOut(nil);videoWindows.forEach{$0.orderOut(nil)}}
  if cmd=="screensaver" {nativeSchedule.pause();closeInlinePanel();window.orderOut(nil);runWeb("restStarted()");restOverlay.startScreensaver(image:lastImage,poem:poemText)}
- if cmd=="rest" {nativeSchedule.pause();closeInlinePanel();window.orderOut(nil);runWeb("restStarted()");restOverlay.start(seconds:restDuration,image:lastImage,poem:poemText)}
+ if cmd=="rest" {guard sessionActivity.isAvailable else{nativeSchedule.suppressRest(true);nativeSchedule.resume();runWeb("restFinished()");return};nativeSchedule.pause();closeInlinePanel();window.orderOut(nil);runWeb("restStarted()");restOverlay.start(seconds:restDuration,image:lastImage,poem:poemText)}
  if cmd=="screens" {closeInlinePanel();let menu=screensMenu().submenu!;menu.popUp(positioning:nil,at:NSEvent.mouseLocation,in:nil)}
  if cmd=="stopVideo" {for p in players{p.pause()};for w in videoWindows{w.orderOut(nil)};for o in loopObservers{NotificationCenter.default.removeObserver(o)};videoWindows=[];players=[];loopObservers=[];videoTexts=[];reply("动态壁纸已停止")}
  if cmd=="video" {restOverlay.finish();closeInlinePanel();let panel=NSOpenPanel();panel.allowedContentTypes=[.movie];panel.canChooseDirectories=false;NSApp.activate(ignoringOtherApps:true);panel.begin{r in guard r == .OK, let url=panel.url else{return};self.perform("stopVideo");self.desktopEnabled=true;self.updateDesktop();let screens=NSScreen.screens;guard !screens.isEmpty else{return};let screen=screens[min(self.screenIndex,screens.count-1)];let w=NSWindow(contentRect:screen.frame,styleMask:.borderless,backing:.buffered,defer:false);w.isReleasedWhenClosed=false;w.level=NSWindow.Level(rawValue:Int(CGWindowLevelForKey(.desktopWindow))+2);w.collectionBehavior=[.canJoinAllSpaces,.stationary,.ignoresCycle];w.ignoresMouseEvents=true;let view=NSView(frame:NSRect(origin:.zero,size:screen.frame.size));view.wantsLayer=true;let player=AVPlayer(url:url);player.isMuted=true;let layer=AVPlayerLayer(player:player);layer.frame=view.bounds;layer.videoGravity = .resizeAspectFill;view.layer=layer;let text=self.poetryLayer(size:view.bounds.size,scale:screen.backingScaleFactor);layer.addSublayer(text);self.videoTexts.append(text);w.contentView=view;let o=NotificationCenter.default.addObserver(forName:.AVPlayerItemDidPlayToEndTime,object:player.currentItem,queue:.main){_ in player.seek(to:.zero);player.play()};self.loopObservers.append(o);self.players.append(player);self.videoWindows.append(w);w.orderFrontRegardless();player.play();self.reply("动态壁纸已开始，可在菜单中停止")}}
