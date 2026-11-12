@@ -24,6 +24,7 @@ extension Delegate {
   options.addItem(settingGroup("诗词对齐","align",[("默认（诗词左对齐，古文两端对齐）","default"),("左对齐","left"),("居中","center"),("右对齐","right"),("两端对齐","justified")]))
   options.addItem(settingGroup("自动切换诗画","interval",[("关闭","0"),("每分钟","60"),("每 5 分钟","300"),("每 15 分钟","900"),("每 30 分钟","1800")]))
   prefs.addItem(display);let rest=settingGroup("休息提醒","reminder",[("关闭","0"),("每 20 分钟","1200"),("每 30 分钟","1800"),("每小时","3600")]);rest.submenu?.addItem(.separator());rest.submenu?.addItem(settingGroup("休息时长","restDuration",[("20 秒","20"),("1 分钟","60"),("3 分钟","180"),("5 分钟","300"),("10 分钟","600")]));rest.submenu?.addItem(actionItem("现在休息一下","rest"));prefs.addItem(rest)
+  let video=NSMenuItem(title:"屏保视频",action:nil,keyEquivalent:"");let videoMenu=NSMenu();video.submenu=videoMenu;videoMenu.addItem(actionItem("选择 MP4 视频…","chooseSaverVideo"));videoMenu.addItem(actionItem("使用视频屏保","enableSaverVideo"));videoMenu.addItem(actionItem("使用静态诗画","disableSaverVideo"));prefs.addItem(video)
   prefs.addItem(actionItem("屏幕保护模式","screensaver"));return root
  }
  func populateOperations(_ menu:NSMenu, shell:Bool){
@@ -43,7 +44,7 @@ extension Delegate {
  @objc func colorChanged(_ panel:NSColorPanel){guard let c=panel.color.usingColorSpace(.sRGB) else{return};applySetting(colorSettingKey,String(format:"#%02x%02x%02x",Int(c.redComponent*255),Int(c.greenComponent*255),Int(c.blueComponent*255)))}
  func syncMenuChecks(){
   let dict=(UserDefaults.standard.string(forKey:"savedState").flatMap{$0.data(using:.utf8)}).flatMap{try? JSONSerialization.jsonObject(with:$0)} as? [String:Any] ?? [:]
-  func walk(_ menu:NSMenu?){for item in menu?.items ?? [] {if item.action == #selector(toggleLogin){item.state=SMAppService.mainApp.status == .enabled ? .on : .off};if let data=item.representedObject as? [String:String],let key=data["key"],let value=data["value"],let current=dict[key]{let currentValue=["true","false"].contains(value) ? ((current as? Bool ?? false) ? "true":"false"):String(describing:current).lowercased();item.state=currentValue==value.lowercased() ? .on : .off};walk(item.submenu)}}
+  func walk(_ menu:NSMenu?){for item in menu?.items ?? [] {if let command=item.representedObject as? String,command=="enableSaverVideo" || command=="disableSaverVideo"{let enabled=ScreenSaverVideo.configuredURL != nil;item.state=(command=="enableSaverVideo" ? enabled:!enabled) ? .on:.off};if item.action == #selector(toggleLogin){item.state=SMAppService.mainApp.status == .enabled ? .on : .off};if let data=item.representedObject as? [String:String],let key=data["key"],let value=data["value"],let current=dict[key]{let currentValue=["true","false"].contains(value) ? ((current as? Bool ?? false) ? "true":"false"):String(describing:current).lowercased();item.state=currentValue==value.lowercased() ? .on : .off};walk(item.submenu)}}
   walk(status.menu);walk(NSApp.mainMenu)
  }
  func menuTree(_ menu:NSMenu) -> [[String:Any]] {menu.items.filter{!$0.isSeparatorItem}.map{["title":$0.title,"children":$0.submenu.map{menuTree($0)} ?? []]}}

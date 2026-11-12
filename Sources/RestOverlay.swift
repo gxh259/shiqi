@@ -1,4 +1,5 @@
 import Cocoa
+import AVFoundation
 
 final class RestScreenWindow:NSWindow {
  override var canBecomeKey:Bool{true}
@@ -18,6 +19,7 @@ final class RestOverlayController:NSObject {
  enum Mode{case rest,screensaver};var mode:Mode?
  var windows:[NSWindow]=[];var countdownLabels:[NSTextField]=[];var countdown:RestCountdown?;var timer:Timer?
  var previousApp:NSRunningApplication?;var observer:Any?;var keyMonitor:Any?;let onFinish:()->Void
+ var videoOverride:URL?;var videoPlayers:[AVQueuePlayer]=[];var videoLoopers:[AVPlayerLooper]=[]
  var image:NSImage?;var poem=""
  var isActive:Bool{mode != nil}
  init(onFinish:@escaping ()->Void){self.onFinish=onFinish;super.init();observer=NotificationCenter.default.addObserver(forName:NSApplication.didChangeScreenParametersNotification,object:nil,queue:.main){[weak self] _ in guard let self=self,self.isActive else{return};self.buildWindows(frames:NSScreen.screens.map{$0.frame},present:true)}}
@@ -35,10 +37,11 @@ final class RestOverlayController:NSObject {
  func updateScene(image:NSImage?,poem:String){self.image=image;self.poem=poem;if isActive{buildWindows(frames:NSScreen.screens.map{$0.frame},present:true)}}
  func label(_ text:String,font:NSFont,color:NSColor=NSColor(calibratedWhite:0.98,alpha:1))->NSTextField {let view=NSTextField(wrappingLabelWithString:text);view.font=font;view.textColor=color;view.alignment = .center;view.maximumNumberOfLines=4;view.translatesAutoresizingMaskIntoConstraints=false;return view}
  func buildWindows(frames:[NSRect],present:Bool){
-  windows.forEach{$0.orderOut(nil);$0.close()};windows=[];countdownLabels=[]
+  stopVideo();windows.forEach{$0.orderOut(nil);$0.close()};windows=[];countdownLabels=[]
   for frame in frames {
    let w=RestScreenWindow(contentRect:frame,styleMask:.borderless,backing:.buffered,defer:false);w.isReleasedWhenClosed=false;w.hasShadow=false;w.level=NSWindow.Level(rawValue:Int(CGWindowLevelForKey(.screenSaverWindow)));w.collectionBehavior=[.canJoinAllSpaces,.fullScreenAuxiliary,.stationary,.ignoresCycle];w.backgroundColor = .black
    let view=RestBackdrop(frame:NSRect(origin:.zero,size:frame.size),image:image);w.contentView=view
+   if let url=videoOverride ?? ScreenSaverVideo.configuredURL{let video=NSView(frame:view.bounds);video.autoresizingMask=[.width,.height];video.wantsLayer=true;let player=AVQueuePlayer();player.isMuted=true;let looper=AVPlayerLooper(player:player,templateItem:AVPlayerItem(url:url));let layer=AVPlayerLayer(player:player);layer.frame=video.bounds;layer.autoresizingMask=[.layerWidthSizable,.layerHeightSizable];layer.videoGravity = .resizeAspectFill;video.layer?.addSublayer(layer);let shade=CALayer();shade.frame=video.bounds;shade.autoresizingMask=[.layerWidthSizable,.layerHeightSizable];shade.backgroundColor=NSColor.black.withAlphaComponent(0.35).cgColor;video.layer?.addSublayer(shade);view.addSubview(video);videoPlayers.append(player);videoLoopers.append(looper);player.play()}
    let title=label(mode == .rest ? "让眼睛放个假" : "一屏山水，一首诗",font:NSFont(name:"Songti SC",size:36) ?? .systemFont(ofSize:36))
    let subtitle=label(mode == .rest ? "砖会一直有，先把自己照顾好。" : "偷得浮生半日闲。",font:.systemFont(ofSize:16),color:NSColor(calibratedWhite:0.95,alpha:0.85))
    let caption=label("休息倒计时",font:.systemFont(ofSize:13,weight:.medium),color:NSColor(calibratedWhite:0.95,alpha:0.8))
@@ -55,6 +58,7 @@ final class RestOverlayController:NSObject {
   if present{NSApp.activate(ignoringOtherApps:true);windows.first?.makeKeyAndOrderFront(nil)}
  }
  func tick(now:Date=Date()){guard let countdown=countdown else{return};let remaining=countdown.remaining(at:now);countdownLabels.forEach{$0.stringValue=RestCountdown.display(remaining)};if remaining==0{finish()}}
+ func stopVideo(){videoPlayers.forEach{$0.pause()};videoLoopers.forEach{$0.disableLooping()};videoPlayers.forEach{$0.removeAllItems()};videoLoopers=[];videoPlayers=[]}
  func dismissForLock(){previousApp=nil;finish()}
- @objc func finish(){guard isActive else{return};timer?.invalidate();timer=nil;countdown=nil;mode=nil;if let keyMonitor=keyMonitor{NSEvent.removeMonitor(keyMonitor);self.keyMonitor=nil};windows.forEach{$0.orderOut(nil);$0.close()};windows=[];countdownLabels=[];image=nil;onFinish();if let app=previousApp,app.processIdentifier != ProcessInfo.processInfo.processIdentifier{app.activate(options:[])};previousApp=nil}
+ @objc func finish(){guard isActive else{return};stopVideo();timer?.invalidate();timer=nil;countdown=nil;mode=nil;if let keyMonitor=keyMonitor{NSEvent.removeMonitor(keyMonitor);self.keyMonitor=nil};windows.forEach{$0.orderOut(nil);$0.close()};windows=[];countdownLabels=[];image=nil;onFinish();if let app=previousApp,app.processIdentifier != ProcessInfo.processInfo.processIdentifier{app.activate(options:[])};previousApp=nil}
 }
